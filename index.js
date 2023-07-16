@@ -8,6 +8,7 @@ const path = require("path");
 const http = require("http");
 const socketio = require("socket.io");
 const formatMessage = require("./utils/messages");
+const expressLayout = require("express-ejs-layouts");
 const createAdapter = require("@socket.io/redis-adapter").createAdapter;
 const redis = require("redis");
 require("dotenv").config();
@@ -136,7 +137,7 @@ app.post("/login", async (request, response) => {
             else if (err) throw err;
 
 
-            if (res.password == password) {
+            if (res && res.password == password) {
                 return response.redirect('index.html');
             }
             else {
@@ -188,6 +189,148 @@ app.post("/sign_up", (req, res) => {
     return res.redirect('userlogin.html');
 
 })
+
+// ====================================================
+
+// To-Do-List
+
+app.set('view engine','ejs');
+app.use(express.static("public"));
+app.use(bodyParse.urlencoded({extended:true}));
+
+mongoose.connect("mongodb://0.0.0.0:27017/mydb",{useNewUrlParser:true,useUnifiedTopology:true});
+const itemSchema={
+    name:String
+}
+const Item=mongoose.model("Item",itemSchema);
+const item1=new Item({
+    name:"Meditation",
+});
+const item2=new Item({
+    name:"Gym",
+});
+const item3=new Item({
+    name:"Breakfast",
+});
+const d=[item1,item2,item3];
+/*
+Item.insertMany(d,function(err)
+{
+    if(err){
+        console.log(err);
+    }
+    else{
+        console.log("Successfully saved items to DB");
+    }
+});
+*/
+
+// app.get("/home",function(req,res)
+// {
+//    // res.send("<h1>Hey guys!!</h1>");
+//    try{
+//     Item.find({},function(err,f)
+//     {
+//        // console.log(f);
+//        if(f.length===0)
+//        {
+//          Item.insertMany(d,function(err)
+//          {
+//              if(err){
+//                  console.log(err);
+//              }
+//              else{
+//                  console.log("Successfully saved items to DB");
+//              }
+//          });
+//        res.redirect("/");
+//        }
+//        else{
+//        res.render("list",{newListItems:f});
+//        }
+//     })
+//    }catch(error){
+//     console.log(error);
+    
+//    }
+// });
+
+app.get('/home', async function(req, res) {
+  try {
+    const newListItems = await Item.find({}).exec();
+    res.render('list', { newListItems });
+  } catch (error) {
+    // Handle the error
+    console.log(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.post("/",function(req,res)
+{
+     const itemName=req.body.n;
+    //console.log(i);
+    //i1.push(i);
+    //res.render("list",{newListItem:i});
+   // res.redirect("/");
+   const item=new Item({
+       name:itemName
+   });
+item.save();
+res.redirect("/home");
+});
+// 
+
+app.post("/delete", async function(req, res) {
+  try {
+    const check = req.body.checkbox;
+    await Item.findByIdAndRemove(check);
+    res.redirect("/home");
+  } catch (error) {
+    // Handle the error
+    console.log(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// ========================================================
+
+// set view engine
+app.set("view engine", "ejs");
+app.set("views", "./views");
+// DB Path
+app.set("views", path.join(__dirname, "views"));
+// extract style and scripts from subpages to layout
+app.set("layout extractStyles", true);
+app.set("layout extractScripts", true);
+//Use router
+app.use(
+  express.urlencoded({
+    extended: false,
+  })
+);
+app.use(express.static("./assets"));
+app.use(expressLayout);
+// require mongoose
+
+const item = require('../models/item');
+
+exports.home = (req, res) => {
+  item.find({})
+    .then(newListItems => {
+      res.render('list', { newListItems });
+    })
+    .catch(error => { 
+      // Handle the error
+      console.log(error);
+      res.status(500).send('Internal Server Error');
+    });
+};
+
+// using router
+app.use("/habit", require("./routes/index"));
+
+//==========================================================
 
 const PORT = process.env.PORT || 3000;
 
