@@ -295,6 +295,8 @@ app.post("/delete", async function(req, res) {
 
 // ========================================================
 
+//Habit Tracker
+
 // set view engine
 app.set("view engine", "ejs");
 app.set("views", "./views");
@@ -313,10 +315,10 @@ app.use(express.static("./assets"));
 app.use(expressLayout);
 // require mongoose
 
-const item = require('../models/item');
+const Item = require('../models/item');
 
 exports.home = (req, res) => {
-  item.find({})
+  Item.find({})
     .then(newListItems => {
       res.render('list', { newListItems });
     })
