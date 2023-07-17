@@ -6,6 +6,7 @@ var mongoose = require("mongoose");
 const e = require("express");
 const path = require("path");
 const http = require("http");
+// var db = require("./config/mongoose");
 const socketio = require("socket.io");
 const formatMessage = require("./utils/messages");
 const expressLayout = require("express-ejs-layouts");
@@ -198,62 +199,64 @@ app.set('view engine','ejs');
 app.use(express.static("public"));
 app.use(bodyParse.urlencoded({extended:true}));
 
-mongoose.connect("mongodb://0.0.0.0:27017/mydb",{useNewUrlParser:true,useUnifiedTopology:true});
-const itemSchema={
-    name:String
-}
-const Item=mongoose.model("Item",itemSchema);
-const item1=new Item({
-    name:"Meditation",
-});
-const item2=new Item({
-    name:"Gym",
-});
-const item3=new Item({
-    name:"Breakfast",
-});
-const d=[item1,item2,item3];
-/*
-Item.insertMany(d,function(err)
-{
-    if(err){
-        console.log(err);
-    }
-    else{
-        console.log("Successfully saved items to DB");
-    }
-});
-*/
+// const mongoose = require("mongoose");
 
-// app.get("/home",function(req,res)
-// {
-//    // res.send("<h1>Hey guys!!</h1>");
-//    try{
-//     Item.find({},function(err,f)
-//     {
-//        // console.log(f);
-//        if(f.length===0)
-//        {
-//          Item.insertMany(d,function(err)
-//          {
-//              if(err){
-//                  console.log(err);
-//              }
-//              else{
-//                  console.log("Successfully saved items to DB");
-//              }
-//          });
-//        res.redirect("/");
-//        }
-//        else{
-//        res.render("list",{newListItems:f});
-//        }
-//     })
-//    }catch(error){
-//     console.log(error);
-    
-//    }
-// });
+mongoose.connect("mongodb://0.0.0.0:27017/mydb", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+
+const itemSchema = {
+  name: String
+};
+const Item = mongoose.model("Item", itemSchema);
+
+const item1 = new Item({
+  name: "Meditation"
+});
+const item2 = new Item({
+  name: "Gym"
+});
+const item3 = new Item({
+  name: "Breakfast"
+});
+const defaultItems = [item1, item2, item3];
+
+// Save default items to the database if there are no items
+// Item.countDocuments({}).exec()
+//   .then(count => {
+//     if (count === 0) {
+//       return Item.insertMany(defaultItems);
+//     } else {
+//       throw new Error("Items already exist in the database.");
+//     }
+//   })
+//   .then(() => {
+//     console.log("Successfully saved items to DB");
+//   })
+//   .catch(err => {
+//     console.log(err);
+//   });
+
+app.get("/home", function (req, res) {
+  Item.find({}).exec()
+    .then(foundItems => {
+      res.render("list", { newListItems: foundItems });
+    })
+    .catch(err => {
+      console.log(err);
+    });
+});
+
+app.get("/home", function (req, res) {
+  Item.find({}, function (err, foundItems) {
+    if (err) {
+      console.log(err);
+    } else {
+      res.render("list", { newListItems: foundItems });
+    }
+  });
+});
 
 app.get('/home', async function(req, res) {
   try {
@@ -314,20 +317,6 @@ app.use(
 app.use(express.static("./assets"));
 app.use(expressLayout);
 // require mongoose
-
-const Item = require('../models/item');
-
-exports.home = (req, res) => {
-  Item.find({})
-    .then(newListItems => {
-      res.render('list', { newListItems });
-    })
-    .catch(error => { 
-      // Handle the error
-      console.log(error);
-      res.status(500).send('Internal Server Error');
-    });
-};
 
 // using router
 app.use("/habit", require("./routes/index"));
