@@ -1,4 +1,4 @@
-// first import install libery 
+// first import install libery
 
 const express = require("express");
 var bodyParse = require("body-parser");
@@ -6,6 +6,7 @@ var mongoose = require("mongoose");
 const e = require("express");
 const path = require("path");
 const http = require("http");
+const csp = require('helmet-csp')
 // var db = require("./config/mongoose");
 const socketio = require("socket.io");
 const formatMessage = require("./utils/messages");
@@ -23,13 +24,12 @@ const {
 
 //create app
 
-const app = express()
+const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 app.use(express.static(path.join(__dirname, "public")));
 
 // chat application
-
 
 // Set static folder
 
@@ -87,138 +87,131 @@ io.on("connection", (socket) => {
   });
 });
 
-
 //=================================================
 
-app.use(bodyParse.json())
-app.use(express.static('public'))
-app.use(bodyParse.urlencoded({
-    extended: true
-}))
+app.use(bodyParse.json());
+app.use(express.static("public"));
+app.use(
+  bodyParse.urlencoded({
+    extended: true,
+  })
+);
 
 // conect database
 
-
-mongoose.connect('mongodb://0.0.0.0:27017/mydb', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
+mongoose.connect("mongodb://0.0.0.0:27017/mydb", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 var db = mongoose.connection;
 
 // check connect
 
-db.on('error', () => console.log("error in connecting database"));
-db.once('open', () => console.log("Connected to Database"));
-
+db.on("error", () => console.log("error in connecting database"));
+db.once("open", () => console.log("Connected to Database"));
 
 app.get("/", (req, res) => {
+  res.set({
+    "Allow-access-Allow-Origin": "*",
+  });
 
-    res.set({
-        "Allow-access-Allow-Origin": '*'
-    })
-
-    return res.redirect('index.html');
-
+  return res.redirect("index.html");
 });
 
 //=============================================
 app.post("/login", async (request, response) => {
-    try {
-        //adding get data from login_up.html
-        const username = request.body.username;
-        const password = request.body.password;
+  try {
+    //adding get data from login_up.html
+    const username = request.body.username;
+    const password = request.body.password;
 
-        console.log(`${username} and ${password}`);
+    console.log(`${username} and ${password}`);
 
-        const usermail = db.collection('users').findOne({ email: username }, (err, res) => {
-            if (res == null) {
-                response.send("Invalid information!❌❌❌! Please create account first");
-            }
-            else if (err) throw err;
+    const usermail = db
+      .collection("users")
+      .findOne({ email: username }, (err, res) => {
+        if (res == null) {
+          response.send(
+            "Invalid information!❌❌❌! Please create account first"
+          );
+        } else if (err) throw err;
 
-
-            if (res && res.password == password) {
-                return response.redirect('index.html');
-            }
-            else {
-                response.send("Invalid Password!❌❌❌");
-            }
-
-
-        });
-    }
-    catch (error) {
-        response.send("Invalid information❌");
-    }
-
-})
+        if (res && res.password == password) {
+          return response.redirect("index.html");
+        } else {
+          response.send("Invalid Password!❌❌❌");
+        }
+      });
+  } catch (error) {
+    response.send("Invalid information❌");
+  }
+});
 
 //Create Object
 
 app.post("/sign_up", (req, res) => {
-    var name = req.body.name;
-    var email = req.body.email;
-    var phno = req.body.phno;
-    var password = req.body.password;
-    var dob = req.body.dob;
-    var gender = req.body.gender;
-    var aadhar = req.body.aadhar;
-    var pancard = req.body.pancard;
-    var location = req.body.location;
-    var message = req.body.message;
-    var address = req.body.address;
-    var data = {
-        "name": name,
-        "email": email,
-        "phno": phno,
-        "password": password,
-        "dob": dob,
-        "gender": gender,
-        "aadhar": aadhar,
-        "pancard": pancard,
-        "location": location,
-        "message": message,
-        "address": address
-    }
+  var name = req.body.name;
+  var email = req.body.email;
+  var phno = req.body.phno;
+  var password = req.body.password;
+  var dob = req.body.dob;
+  var gender = req.body.gender;
+  var aadhar = req.body.aadhar;
+  var pancard = req.body.pancard;
+  var location = req.body.location;
+  var message = req.body.message;
+  var address = req.body.address;
+  var data = {
+    name: name,
+    email: email,
+    phno: phno,
+    password: password,
+    dob: dob,
+    gender: gender,
+    aadhar: aadhar,
+    pancard: pancard,
+    location: location,
+    message: message,
+    address: address,
+  };
 
-    //sent database
-    db.collection('users').insertOne(data, (err, collection) => {
-        if (err) throw err;
-        console.log("Record Inserted Successfully");
-    });
-    return res.redirect('userlogin.html');
-
-})
+  //sent database
+  db.collection("users").insertOne(data, (err, collection) => {
+    if (err) throw err;
+    console.log("Record Inserted Successfully");
+  });
+  return res.redirect("userlogin.html");
+});
 
 // ====================================================
 
 // To-Do-List
 
-app.set('view engine','ejs');
+app.set("view engine", "ejs");
 app.use(express.static("public"));
-app.use(bodyParse.urlencoded({extended:true}));
+app.use(bodyParse.urlencoded({ extended: true }));
 
 // const mongoose = require("mongoose");
 
 mongoose.connect("mongodb://0.0.0.0:27017/mydb", {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
 });
 
 const itemSchema = {
-  name: String
+  name: String,
 };
 const Item = mongoose.model("Item", itemSchema);
 
 const item1 = new Item({
-  name: "Meditation"
+  name: "Meditation",
 });
 const item2 = new Item({
-  name: "Gym"
+  name: "Gym",
 });
 const item3 = new Item({
-  name: "Breakfast"
+  name: "Breakfast",
 });
 const defaultItems = [item1, item2, item3];
 
@@ -238,61 +231,61 @@ const defaultItems = [item1, item2, item3];
 //     console.log(err);
 //   });
 
-app.get("/home", function (req, res) {
-  Item.find({}).exec()
-    .then(foundItems => {
+app.get("/header", function (req, res) {
+  Item.find({})
+    .exec()
+    .then((foundItems) => {
       res.render("list", { newListItems: foundItems });
     })
-    .catch(err => {
+    .catch((err) => {
       console.log(err);
     });
 });
 
-app.get("/home", function (req, res) {
-  Item.find({}, function (err, foundItems) {
-    if (err) {
-      console.log(err);
-    } else {
+app.get("/header", function (req, res) {
+  Item.find()
+    .then(function (foundItems) {
       res.render("list", { newListItems: foundItems });
-    }
-  });
+    })
+    .catch(function (err) {
+      console.log(err);
+    });
 });
 
-app.get('/home', async function(req, res) {
+app.get("/header", async function (req, res) {
   try {
     const newListItems = await Item.find({}).exec();
-    res.render('list', { newListItems });
+    res.render("list", { newListItems });
   } catch (error) {
     // Handle the error
     console.log(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send("Internal Server Error");
   }
 });
 
-app.post("/",function(req,res)
-{
-     const itemName=req.body.n;
-    //console.log(i);
-    //i1.push(i);
-    //res.render("list",{newListItem:i});
-   // res.redirect("/");
-   const item=new Item({
-       name:itemName
-   });
-item.save();
-res.redirect("/home");
+app.post("/", function (req, res) {
+  const itemName = req.body.n;
+  //console.log(i);
+  //i1.push(i);
+  //res.render("list",{newListItem:i});
+  // res.redirect("/");
+  const item = new Item({
+    name: itemName,
+  });
+  item.save();
+  res.redirect("/header");
 });
-// 
+//
 
-app.post("/delete", async function(req, res) {
+app.post("/delete", async function (req, res) {
   try {
     const check = req.body.checkbox;
     await Item.findByIdAndRemove(check);
-    res.redirect("/home");
+    res.redirect("/header");
   } catch (error) {
     // Handle the error
     console.log(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send("Internal Server Error");
   }
 });
 
@@ -301,6 +294,7 @@ app.post("/delete", async function(req, res) {
 //Habit Tracker
 
 // set view engine
+var db = require("./config/mongoose");
 app.set("view engine", "ejs");
 app.set("views", "./views");
 // DB Path
@@ -319,7 +313,23 @@ app.use(expressLayout);
 // require mongoose
 
 // using router
-app.use("/habit", require("./routes/index"));
+// app.get("/habit", function (req, res) {
+//   Item.find()
+//     .then(function (foundItems) {
+//       res.render("./routes/index");
+//     })
+//     .catch(function (err) {
+//       console.log(err);
+//     });
+// });
+app.use("/home", require("./routes/index"));
+
+app.use(csp({
+  directives: {
+    defaultSrc: ["'self'"],
+    styleSrc: ["'self'", 'maxcdn.bootstrapcdn.com']
+  }
+}))
 
 //==========================================================
 
